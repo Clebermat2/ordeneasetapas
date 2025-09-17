@@ -3,370 +3,275 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>O Quebra-Cabeça do Processo - PDDE</title>
+    <title>Ordene as Etapas: Prestação de Contas</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            overflow-x: hidden;
         }
-        .puzzle-board {
-            display: flex;
-            justify-content: center;
-            padding: 10px 0;
-            flex-wrap: wrap; /* Allow wrapping on small screens */
-        }
-        .puzzle-slot {
-            position: relative;
-            width: 160px;
-            height: 100px;
-            border: 2px dashed #cbd5e1;
-            border-radius: 8px;
-            transition: all 0.2s ease-in-out;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 5px;
-        }
-        .puzzle-slot:not(:first-child) {
-            margin-left: -20px;
-        }
-        .puzzle-piece {
-            width: 160px;
-            height: 100px;
-            background-color: white;
-            color: #374151;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 0 25px;
-            font-size: 0.8rem;
+        .card {
+            touch-action: none;
             cursor: grab;
-            position: relative;
-            clip-path: url(#jigsaw-shape);
+            user-select: none;
             transition: all 0.2s ease-in-out;
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
         }
-        .puzzle-piece:active {
+        .card:active {
             cursor: grabbing;
-            filter: drop-shadow(0 8px 10px rgba(0,0,0,0.15));
             transform: scale(1.05);
-            z-index: 10;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
-        .drag-over { background-color: #e0e7ff; border-color: #a5b4fc; }
-        .dragging { opacity: 0.5; }
-        .correct { background-color: #dcfce7; color: #166534; }
-        .incorrect { background-color: #fee2e2; color: #991b1b; animation: shake 0.5s ease-in-out; }
-        .slot-correct { border-color: #16a34a; border-style: solid; }
-        .slot-incorrect { border-color: #dc2626; border-style: solid; animation: shake 0.5s ease-in-out; }
-        .info-icon { cursor: pointer; position: absolute; bottom: 5px; right: 25px; color: #6b7280; transition: color 0.2s; }
-        .info-icon:hover { color: #3b82f6; }
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; }
-        .modal-overlay.visible { opacity: 1; visibility: visible; }
-        .modal-content { background: white; padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%; transform: scale(0.9); transition: transform 0.3s; }
-        .modal-overlay.visible .modal-content { transform: scale(1); }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); } 20%, 40%, 60%, 80% { transform: translateX(5px); } }
-        
-        /* Celebration Styles */
-        .confetti {
-            position: fixed;
-            width: 10px;
-            height: 10px;
-            background-color: #f00;
-            opacity: 0.7;
-            pointer-events: none;
-            z-index: 2000;
+        .drop-zone {
+            border: 2px dashed #cbd5e1;
+            transition: background-color 0.2s ease;
         }
-        .trophy-icon {
-            font-size: 5rem;
-            color: #f59e0b;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        .drag-over {
+            background-color: #e2e8f0;
+            border-color: #4f46e5;
         }
-        .badge {
-            background-color: #3b82f6;
-            color: white;
-            border-radius: 50%;
-            width: 120px;
-            height: 120px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            border: 4px solid #1d4ed8;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-        .badge span:first-child {
-            font-weight: bold;
-            font-size: 1.2rem;
-        }
-        .badge span:last-child {
-            font-size: 0.7rem;
-            max-width: 90%;
+        .placeholder {
+            height: 50px;
+            background-color: #f1f5f9;
+            border-radius: 0.5rem;
+            margin: 0.5rem 0;
         }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+<body class="bg-slate-100 text-slate-800 flex items-center justify-center min-h-screen p-4">
 
-    <!-- SVG for clip-path -->
-    <svg width="0" height="0">
-        <defs>
-            <clipPath id="jigsaw-shape" clipPathUnits="objectBoundingBox">
-                <path d="M0.05,0.15 C0.05,0.15 0.05,0.85 0.05,0.85 C0.05,0.95 0.15,0.95 0.15,0.95 C0.15,0.95 0.85,0.95 0.85,0.95 C0.95,0.95 0.95,0.85 0.95,0.85 C0.95,0.85 0.95,0.575 0.95,0.575 C1,0.575 1.05,0.525 1,0.5 C1.05,0.475 1,0.425 0.95,0.425 C0.95,0.425 0.95,0.15 0.95,0.15 C0.95,0.05 0.85,0.05 0.85,0.05 C0.85,0.05 0.575,0.05 0.575,0.05 C0.575,0 0.525,-0.05 0.5,0 C0.475,-0.05 0.425,0 0.425,0.05 C0.425,0.05 0.15,0.05 0.15,0.05 C0.05,0.05 0.05,0.15 0.05,0.15 Z"></path>
-            </clipPath>
-        </defs>
-    </svg>
-
-    <div class="w-full max-w-5xl mx-auto bg-white rounded-xl shadow-lg p-6 md:p-8">
+    <main class="bg-white rounded-xl shadow-lg p-6 md:p-8 w-full max-w-4xl mx-auto">
         
-        <div class="text-center mb-6">
-            <h1 class="text-2xl md:text-3xl font-bold text-indigo-700">O Quebra-Cabeça do Processo</h1>
-            <p class="text-gray-600 mt-2">Monte o fluxo da prestação de contas na ordem correta.</p>
-        </div>
-
-        <div class="bg-indigo-50 border-l-4 border-indigo-500 text-indigo-800 p-4 rounded-md mb-8">
-            <p><strong class="font-semibold">Missão:</strong> Arraste as peças abaixo para o tabuleiro e forme o fluxo do processo. Lembre-se de descartar a peça incorreta!</p>
-        </div>
-
-        <div id="puzzle-board-container" class="bg-gray-50 rounded-lg p-4 mb-8 overflow-x-auto">
-            <h2 class="text-lg font-semibold text-center text-gray-700 mb-4">Fluxo da Prestação de Contas</h2>
-            <div id="puzzle-board" class="puzzle-board"></div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-                <h2 class="text-lg font-semibold text-center text-gray-700 mb-4">Banco de Peças</h2>
-                <div id="piece-bank" class="p-4 bg-gray-100 rounded-lg min-h-[120px] flex flex-wrap gap-4 justify-center items-center"></div>
-            </div>
-            <div>
-                <h2 class="text-lg font-semibold text-center text-gray-700 mb-4">Área de Descarte</h2>
-                <div id="discard-area" class="p-4 bg-red-50 border-2 border-dashed border-red-200 rounded-lg min-h-[120px] flex justify-center items-center"></div>
+        <!-- Tela de Início -->
+        <div id="start-screen" class="text-center">
+            <h1 class="text-3xl font-bold text-indigo-600">Atividade: Ordene as Etapas</h1>
+            <p class="text-slate-600 mt-4 max-w-2xl mx-auto">Seja bem-vindo! Sua missão é ordenar as fases do processo de prestação de contas na sequência correta. Arraste e solte as cartas para montar o fluxo.</p>
+            <div class="mt-8">
+                <button id="start-button" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                    Começar
+                </button>
             </div>
         </div>
 
-        <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button id="check-button" class="w-full sm:w-auto bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">Verificar Resposta</button>
-            <button id="reset-button" class="w-full sm:w-auto bg-gray-200 text-gray-700 font-bold py-3 px-8 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-transform transform hover:scale-105">Tentar Novamente</button>
-        </div>
+        <!-- Tela do Jogo (inicialmente oculta) -->
+        <div id="game-screen" class="hidden">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-indigo-600">Atividade: Ordene as Etapas</h1>
+                <p class="text-slate-600 mt-2">Arraste as cartas e ordene o fluxo. As cartas corretas ficarão verdes!</p>
+            </div>
 
-        <div id="feedback-message" class="mt-6 text-center text-lg font-medium"></div>
-    </div>
-
-    <!-- Info Modal -->
-    <div id="info-modal" class="modal-overlay">
-        <div class="modal-content">
-            <h3 id="modal-title" class="text-xl font-bold text-indigo-700 mb-4"></h3>
-            <p id="modal-text" class="text-gray-600"></p>
-            <button id="modal-close" class="mt-6 w-full bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700">Fechar</button>
-        </div>
-    </div>
-
-    <!-- Victory Modal -->
-    <div id="victory-modal" class="modal-overlay">
-        <div class="modal-content text-center">
-            <h2 class="text-3xl font-bold text-amber-500 mb-4">Parabéns!</h2>
-            <p class="text-gray-700 mb-6">Você completou o desafio e montou o fluxo corretamente!</p>
-            <div class="flex justify-around items-center mb-8">
-                <div class="badge">
-                    <span>🏆</span>
-                    <span>Mestre da Gestão</span>
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Coluna de etapas a ordenar -->
+                <div>
+                    <h2 class="text-lg font-semibold mb-4 text-center border-b pb-2">Etapas a Ordenar</h2>
+                    <div id="unsorted-container" class="drop-zone space-y-3 min-h-[300px] p-2 rounded-lg">
+                        <!-- As cartas serão inseridas aqui pelo JavaScript -->
+                    </div>
                 </div>
-                <div class="trophy-icon">🏅</div>
-                <div class="badge">
-                    <span>⭐</span>
-                    <span>Especialista em PDDE</span>
+
+                <!-- Coluna para soltar as etapas ordenadas -->
+                <div>
+                    <h2 class="text-lg font-semibold mb-4 text-center border-b pb-2">Fluxo da Prestação de Contas</h2>
+                    <div id="sorted-container" class="drop-zone space-y-3 min-h-[300px] p-4 rounded-lg">
+                        <!-- Espaço para soltar as cartas -->
+                    </div>
                 </div>
             </div>
-            <button id="victory-reset-button" class="w-full bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700">Jogar Novamente</button>
+
+            <!-- Botão de Reiniciar -->
+            <div class="text-center mt-8">
+                <button id="restart-button" class="bg-slate-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-slate-600 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2">
+                    Reiniciar
+                </button>
+            </div>
         </div>
-    </div>
+        
+        <!-- Tela Final (inicialmente oculta) -->
+        <div id="end-screen" class="hidden text-center">
+            <h1 class="text-3xl font-bold text-green-600">Parabéns!</h1>
+            <p class="text-slate-600 mt-4 max-w-2xl mx-auto">Você completou a atividade com sucesso e ordenou corretamente o fluxo da prestação de contas.</p>
+            <div class="mt-8">
+                <button id="play-again-button" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                    Jogar Novamente
+                </button>
+            </div>
+        </div>
+
+    </main>
 
     <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const PIECES_DATA = [
-            { id: 1, text: 'UEx anexa os documentos fiscais no BB Gestão Ágil.', isDistractor: false, details: 'Este é o primeiro passo. A Unidade Executora (UEx) digitaliza e insere todas as notas fiscais e comprovantes de despesas na plataforma online do Banco do Brasil.' },
-            { id: 2, text: 'UEx entrega a pasta física com todos os documentos para a EEx.', isDistractor: false, details: 'Após o lançamento digital, a UEx organiza todos os documentos originais em uma pasta física para serem entregues à Entidade Executora (EEx) para conferência.' },
-            { id: 3, text: 'EEx analisa a pasta física e confere os lançamentos no BB Gestão Ágil.', isDistractor: false, details: 'A EEx realiza uma auditoria cruzada, comparando os documentos físicos com os registros feitos no sistema BB Gestão Ágil para garantir a conformidade.' },
-            { id: 4, text: 'EEx preenche o Demonstrativo Consolidado no SiGPC.', isDistractor: false, details: 'Com os dados validados, a EEx preenche o Demonstrativo da Execução Físico-Financeira no Sistema de Gestão de Prestação de Contas (SiGPC).'},
-            { id: 5, text: 'EEx envia o Demonstrativo Consolidado ao FNDE.', isDistractor: false, details: 'Este é o último passo. A EEx finaliza e transmite a prestação de contas ao Fundo Nacional de Desenvolvimento da Educação (FNDE) através do SiGPC.' },
-            { id: 6, text: 'UEx solicita aprovação do diretor da escola por e-mail.', isDistractor: true, details: 'Esta etapa não faz parte do fluxo oficial de prestação de contas do PDDE.' }
-        ];
+        document.addEventListener('DOMContentLoaded', () => {
+            const steps = [
+                { id: 1, text: 'UEx anexa os documentos fiscais no BB Gestão Ágil.' },
+                { id: 2, text: 'UEx entrega a pasta física com todos os documentos para a EEx.' },
+                { id: 3, text: 'EEx analisa a pasta física e confere os lançamentos no BB Gestão Ágil.' },
+                { id: 4, text: 'EEx preenche o Demonstrativo Consolidado no SIGPC.' },
+                { id: 5, text: 'EEx envia o Demonstrativo Consolidado ao FNDE.' }
+            ];
 
-        const pieceBank = document.getElementById('piece-bank');
-        const puzzleBoard = document.getElementById('puzzle-board');
-        const discardArea = document.getElementById('discard-area');
-        const checkButton = document.getElementById('check-button');
-        const resetButton = document.getElementById('reset-button');
-        const feedbackMessage = document.getElementById('feedback-message');
-        const infoModal = document.getElementById('info-modal');
-        const modalTitle = document.getElementById('modal-title');
-        const modalText = document.getElementById('modal-text');
-        const modalClose = document.getElementById('modal-close');
-        const victoryModal = document.getElementById('victory-modal');
-        const victoryResetButton = document.getElementById('victory-reset-button');
-
-        let draggedElement = null;
-
-        function shuffle(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
-        }
-
-        function initGame() {
-            pieceBank.innerHTML = '';
-            puzzleBoard.innerHTML = '';
-            discardArea.innerHTML = '<span class="text-red-400">Arraste a peça incorreta aqui</span>';
-            feedbackMessage.textContent = '';
-            checkButton.style.display = 'inline-block';
-            resetElementStyles();
-            victoryModal.classList.remove('visible');
-
-            const correctPieces = PIECES_DATA.filter(p => !p.isDistractor);
-            correctPieces.forEach((_, index) => {
-                const slot = document.createElement('div');
-                slot.className = 'puzzle-slot';
-                slot.dataset.slotId = index + 1;
-                slot.innerHTML = `<span class="text-gray-400 text-sm p-2">Etapa ${index + 1}</span>`;
-                puzzleBoard.appendChild(slot);
-            });
-
-            const shuffledPieces = shuffle([...PIECES_DATA]);
-            shuffledPieces.forEach(pieceData => {
-                const piece = document.createElement('div');
-                piece.className = 'puzzle-piece';
-                piece.dataset.id = pieceData.id;
-                piece.draggable = true;
-                
-                let pieceHTML = `<span>${pieceData.text}</span>`;
-                if (!pieceData.isDistractor) {
-                    pieceHTML += `<svg data-id="${pieceData.id}" class="info-icon h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>`;
-                }
-                piece.innerHTML = pieceHTML;
-                pieceBank.appendChild(piece);
-            });
-            addEventListeners();
-        }
-
-        function addEventListeners() {
-            const draggables = document.querySelectorAll('.puzzle-piece');
-            const droppables = document.querySelectorAll('.puzzle-slot, #piece-bank, #discard-area');
-            draggables.forEach(d => { d.addEventListener('dragstart', handleDragStart); d.addEventListener('dragend', handleDragEnd); });
-            droppables.forEach(d => { d.addEventListener('dragover', handleDragOver); d.addEventListener('dragleave', handleDragLeave); d.addEventListener('drop', handleDrop); });
-            document.querySelectorAll('.info-icon').forEach(i => i.addEventListener('click', showInfoModal));
-        }
-
-        function handleDragStart(e) { draggedElement = this; setTimeout(() => this.classList.add('dragging'), 0); }
-        function handleDragEnd() { this.classList.remove('dragging'); draggedElement = null; }
-        function handleDragOver(e) { e.preventDefault(); if (this.classList.contains('puzzle-slot') && this.children.length > 1) return; this.classList.add('drag-over'); }
-        function handleDragLeave() { this.classList.remove('drag-over'); }
-        function handleDrop(e) {
-            e.preventDefault();
-            this.classList.remove('drag-over');
-            if (!draggedElement) return;
-            const target = this;
-            if (target.classList.contains('puzzle-slot') && target.querySelector('.puzzle-piece')) return;
-            if (target.classList.contains('puzzle-slot') && target.querySelector('span')) target.querySelector('span').style.display = 'none';
-            if (draggedElement.parentElement.classList.contains('puzzle-slot') && draggedElement.parentElement.querySelector('span')) draggedElement.parentElement.querySelector('span').style.display = 'flex';
-            target.appendChild(draggedElement);
-            resetElementStyles();
-        }
-
-        function showInfoModal(e) {
-            e.stopPropagation();
-            const pieceId = e.target.closest('.puzzle-piece').dataset.id;
-            const pieceData = PIECES_DATA.find(p => p.id == pieceId);
-            if (pieceData) {
-                modalTitle.textContent = `Etapa ${pieceData.id}: Detalhes`;
-                modalText.textContent = pieceData.details;
-                infoModal.classList.add('visible');
-            }
-        }
-        function hideInfoModal() { infoModal.classList.remove('visible'); }
-        
-        function resetElementStyles() {
-             document.querySelectorAll('.puzzle-slot, .puzzle-piece').forEach(el => el.classList.remove('correct', 'incorrect', 'slot-correct', 'slot-incorrect'));
-             feedbackMessage.textContent = '';
-        }
-
-        function checkAnswer() {
-            resetElementStyles();
-            let isAllCorrect = true;
-            let firstErrorFound = false;
-            const slots = puzzleBoard.querySelectorAll('.puzzle-slot');
-            slots.forEach((slot, i) => {
-                const piece = slot.querySelector('.puzzle-piece');
-                const expectedId = i + 1;
-                if (!piece) { isAllCorrect = false; if (!firstErrorFound) { slot.classList.add('slot-incorrect'); firstErrorFound = true; }
-                } else {
-                    if (parseInt(piece.dataset.id) === expectedId) { piece.classList.add('correct'); slot.classList.add('slot-correct');
-                    } else { isAllCorrect = false; if (!firstErrorFound) { piece.classList.add('incorrect'); slot.classList.add('slot-incorrect'); firstErrorFound = true; } }
-                }
-            });
-            const discardedPiece = discardArea.querySelector('.puzzle-piece');
-            const distractorPiece = PIECES_DATA.find(p => p.isDistractor);
-            if (!discardedPiece || parseInt(discardedPiece.dataset.id) !== distractorPiece.id) { isAllCorrect = false; if (!firstErrorFound) { discardArea.classList.add('slot-incorrect'); if(discardedPiece) discardedPiece.classList.add('incorrect'); firstErrorFound = true; }
-            } else { discardedPiece.classList.add('correct'); }
-            if (pieceBank.querySelector('.puzzle-piece')) isAllCorrect = false;
-
-            if (isAllCorrect) {
-                showVictoryScreen();
-            } else {
-                feedbackMessage.textContent = 'Ops! Algo não está certo. Verifique as peças e tente novamente.';
-                feedbackMessage.className = 'mt-6 text-center text-lg font-medium text-red-600';
-            }
-        }
-
-        function showVictoryScreen() {
-            victoryModal.classList.add('visible');
-            launchConfetti();
-        }
-
-        function launchConfetti() {
-            const confettiCount = 200;
-            const colors = ['#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6'];
-            for (let i = 0; i < confettiCount; i++) {
-                const confetti = document.createElement('div');
-                confetti.className = 'confetti';
-                confetti.style.left = Math.random() * 100 + 'vw';
-                confetti.style.top = Math.random() * -100 + 'vh';
-                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
-                document.body.appendChild(confetti);
-                animateConfetti(confetti);
-            }
-        }
-
-        function animateConfetti(confetti) {
-            const duration = Math.random() * 3 + 4;
-            const xEnd = Math.random() * 100;
-            const yEnd = window.innerHeight + 100;
+            const startScreen = document.getElementById('start-screen');
+            const gameScreen = document.getElementById('game-screen');
+            const endScreen = document.getElementById('end-screen');
             
-            confetti.animate([
-                { transform: `translate(0, 0) rotate(${Math.random() * 360}deg)`, opacity: 1 },
-                { transform: `translate(${xEnd}vw, ${yEnd}px) rotate(${Math.random() * 1000}deg)`, opacity: 0 }
-            ], {
-                duration: duration * 1000,
-                easing: 'linear',
-            }).onfinish = () => {
-                confetti.remove();
-            };
-        }
+            const startButton = document.getElementById('start-button');
+            const playAgainButton = document.getElementById('play-again-button');
+            const restartButton = document.getElementById('restart-button');
 
-        checkButton.addEventListener('click', checkAnswer);
-        resetButton.addEventListener('click', initGame);
-        victoryResetButton.addEventListener('click', initGame);
-        infoModal.addEventListener('click', (e) => { if (e.target === infoModal || e.target === modalClose) hideInfoModal(); });
-        victoryModal.addEventListener('click', (e) => { if (e.target === victoryModal) victoryModal.classList.remove('visible'); });
+            const unsortedContainer = document.getElementById('unsorted-container');
+            const sortedContainer = document.getElementById('sorted-container');
 
-        initGame();
-    });
+            let draggedItem = null;
+            
+            startButton.addEventListener('click', () => {
+                startScreen.classList.add('hidden');
+                gameScreen.classList.remove('hidden');
+                initializeGame();
+            });
+
+            playAgainButton.addEventListener('click', () => {
+                endScreen.classList.add('hidden');
+                gameScreen.classList.remove('hidden');
+                initializeGame();
+            });
+            
+            restartButton.addEventListener('click', initializeGame);
+
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
+
+            function initializeGame() {
+                unsortedContainer.innerHTML = '';
+                sortedContainer.innerHTML = '';
+                endScreen.classList.add('hidden');
+                startScreen.classList.add('hidden');
+                gameScreen.classList.remove('hidden');
+
+                const shuffledSteps = [...steps];
+                shuffleArray(shuffledSteps);
+
+                shuffledSteps.forEach(step => {
+                    const card = document.createElement('div');
+                    card.className = 'card bg-white p-4 rounded-lg shadow border-l-4 border-slate-300';
+                    card.draggable = true;
+                    card.dataset.id = step.id;
+                    card.textContent = step.text;
+                    unsortedContainer.appendChild(card);
+                });
+
+                addDragListeners();
+            }
+
+            function addDragListeners() {
+                const cards = document.querySelectorAll('.card');
+                cards.forEach(card => {
+                    card.addEventListener('dragstart', handleDragStart);
+                    card.addEventListener('dragend', handleDragEnd);
+                });
+            }
+
+            function handleDragStart(e) {
+                draggedItem = e.target;
+                setTimeout(() => {
+                    e.target.style.opacity = '0.5';
+                }, 0);
+            }
+
+            function handleDragEnd() {
+                if(draggedItem) {
+                    draggedItem.style.opacity = '1';
+                }
+                draggedItem = null;
+                document.querySelectorAll('.placeholder').forEach(p => p.remove());
+            }
+            
+            [unsortedContainer, sortedContainer].forEach(container => {
+                container.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    container.classList.add('drag-over');
+                    const afterElement = getDragAfterElement(container, e.clientY);
+                    const placeholder = document.querySelector('.placeholder');
+                    if (!placeholder) {
+                        const newPlaceholder = document.createElement('div');
+                        newPlaceholder.className = 'placeholder';
+                         if (afterElement == null) {
+                            container.appendChild(newPlaceholder);
+                        } else {
+                            container.insertBefore(newPlaceholder, afterElement);
+                        }
+                    }
+                });
+                
+                container.addEventListener('dragleave', () => {
+                    container.classList.remove('drag-over');
+                    document.querySelectorAll('.placeholder').forEach(p => p.remove());
+                });
+
+                container.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    container.classList.remove('drag-over');
+                    const placeholder = document.querySelector('.placeholder');
+                    
+                    if (draggedItem) {
+                         if (placeholder) {
+                            container.insertBefore(draggedItem, placeholder);
+                        } else {
+                            container.appendChild(draggedItem);
+                        }
+                        if (placeholder) placeholder.remove();
+
+                        updateAndCheckOrder();
+                    }
+                });
+            });
+
+
+            function getDragAfterElement(container, y) {
+                const draggableElements = [...container.querySelectorAll('.card:not(.dragging)')];
+                return draggableElements.reduce((closest, child) => {
+                    const box = child.getBoundingClientRect();
+                    const offset = y - box.top - box.height / 2;
+                    if (offset < 0 && offset > closest.offset) {
+                        return { offset: offset, element: child };
+                    } else {
+                        return closest;
+                    }
+                }, { offset: Number.NEGATIVE_INFINITY }).element;
+            }
+
+            function updateAndCheckOrder() {
+                // Reset borders of cards in the unsorted pile
+                unsortedContainer.querySelectorAll('.card').forEach(card => {
+                    card.classList.remove('border-green-500');
+                    card.classList.add('border-slate-300');
+                });
+
+                const sortedCards = sortedContainer.querySelectorAll('.card');
+                let correctCount = 0;
+
+                sortedCards.forEach((card, index) => {
+                    const isCorrect = parseInt(card.dataset.id) === index + 1;
+                    card.classList.remove('border-slate-300', 'border-green-500');
+
+                    if (isCorrect) {
+                        card.classList.add('border-green-500');
+                        correctCount++;
+                    } else {
+                        card.classList.add('border-slate-300');
+                    }
+                });
+
+                if (correctCount === steps.length && sortedCards.length === steps.length) {
+                    setTimeout(() => {
+                        gameScreen.classList.add('hidden');
+                        endScreen.classList.remove('hidden');
+                    }, 500); 
+                }
+            }
+        });
     </script>
 </body>
 </html>
+
